@@ -1,0 +1,58 @@
+{
+  "name": "smarttestai",
+  "version": "1.0.0",
+  "description": "AI-powered automatic question generation and quiz platform",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erenxcolakx/SmartTestAI.git"
+  },
+  "keywords": [
+    "AI",
+    "quiz",
+    "education",
+    "test",
+    "question-generation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/erenxcolakx/SmartTestAI/issues"
+  },
+  "homepage": "https://github.com/erenxcolakx/SmartTestAI#readme",
+  "dependencies": {
+    "@headlessui/react": "^2.2.2",
+    "@heroicons/react": "^2.2.0",
+    "@tanstack/react-query": "^5.74.7",
+    "@types/node": "^22.15.3",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "autoprefixer": "^10.4.21",
+    "axios": "^1.9.0",
+    "clsx": "^2.1.1",
+    "formik": "^2.4.6",
+    "mammoth": "^1.9.0",
+    "next": "^15.3.1",
+    "next-themes": "^0.4.6",
+    "openai": "^4.96.0",
+    "pdf-parse": "^1.1.1",
+    "postcss": "^8.5.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-icons": "^5.5.0",
+    "tailwind-merge": "^3.2.0",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.3",
+    "yup": "^1.6.1"
+  }
+}
