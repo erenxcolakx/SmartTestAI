@@ -2,16 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
-interface Params {
-  params: {
-    id: string;
-  };
-}
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
 
 // Belirli bir quizi getirir
-export async function GET(request: NextRequest, { params }: Params) {
+export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
     
     if (!ObjectId.isValid(id)) {
       return NextResponse.json(
@@ -41,9 +39,9 @@ export async function GET(request: NextRequest, { params }: Params) {
 }
 
 // Quizi günceller
-export async function PUT(request: NextRequest, { params }: Params) {
+export async function PUT(request: NextRequest, context: RouteContext) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
     
     if (!ObjectId.isValid(id)) {
       return NextResponse.json(
@@ -89,9 +87,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
 }
 
 // Quizi siler
-export async function DELETE(request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
     
     if (!ObjectId.isValid(id)) {
       return NextResponse.json(

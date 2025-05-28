@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BiLoader, BiCheck, BiX } from 'react-icons/bi';
 import axios from 'axios';
 
-export default function GeneratePage() {
+function GeneratePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fileName = searchParams.get('fileName');
@@ -248,5 +248,13 @@ export default function GeneratePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function GeneratePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <GeneratePageContent />
+    </Suspense>
   );
 }

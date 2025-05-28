@@ -5,9 +5,13 @@ import { useRouter } from 'next/navigation';
 import { BiCheck, BiX, BiLeftArrowAlt, BiRightArrowAlt, BiFlag, BiLoader, BiTime } from 'react-icons/bi';
 import axios from 'axios';
 
-export default function QuizPage({ params }: { params: { id: string } }) {
+interface QuizPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function QuizPage({ params }: QuizPageProps) {
   const router = useRouter();
-  const quizId = params.id;
+  const [quizId, setQuizId] = useState<string>('');
   
   const [quiz, setQuiz] = useState<any>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -21,6 +25,18 @@ export default function QuizPage({ params }: { params: { id: string } }) {
   const [quizResult, setQuizResult] = useState<any>(null);
 
   useEffect(() => {
+    // Initialize params
+    const initializeParams = async () => {
+      const resolvedParams = await params;
+      setQuizId(resolvedParams.id);
+    };
+    
+    initializeParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (!quizId) return;
+    
     // Quiz verilerini API'den yükle
     const loadQuiz = async () => {
       try {
