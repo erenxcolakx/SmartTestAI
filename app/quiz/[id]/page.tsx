@@ -2,99 +2,35 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { BiCheck, BiX, BiLeftArrowAlt, BiRightArrowAlt, BiFlag } from 'react-icons/bi';
-
-// Mock quiz data
-const mockQuiz = {
-  id: 1,
-  title: 'SmartTest AI Overview',
-  questions: [
-    {
-      id: 1,
-      question: 'What is the main function of SmartTest AI?',
-      options: [
-        'Editing documents',
-        'Generating AI-powered quizzes',
-        'Video conferencing',
-        'Storing files in the cloud'
-      ],
-      correctAnswer: 1
-    },
-    {
-      id: 2,
-      question: 'What is the maximum file size supported for uploads?',
-      options: [
-        '5MB',
-        '10MB',
-        '20MB',
-        '50MB'
-      ],
-      correctAnswer: 1
-    },
-    {
-      id: 3,
-      question: 'Which file formats are supported by SmartTest AI?',
-      options: [
-        'PDF, DOCX, TXT',
-        'PDF, JPG, PNG',
-        'DOCX, XLSX, PPT',
-        'TXT, CSV, XML'
-      ],
-      correctAnswer: 0
-    },
-    {
-      id: 4,
-      question: 'How does SmartTest AI generate questions?',
-      options: [
-        'Manual input from users',
-        'Using pre-defined templates',
-        'Using AI and NLP models',
-        'Copying from external sources'
-      ],
-      correctAnswer: 2
-    },
-    {
-      id: 5,
-      question: 'How long are performance reports stored in SmartTest AI?',
-      options: [
-        '7 days',
-        '14 days',
-        '30 days',
-        '90 days'
-      ],
-      correctAnswer: 2
-    }
-  ]
-};
+import { BiCheck, BiX, BiLeftArrowAlt, BiRightArrowAlt, BiFlag, BiLoader, BiTime } from 'react-icons/bi';
+import axios from 'axios';
 
 export default function QuizPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const quizId = parseInt(params.id);
+  const quizId = params.id;
   
-  const [quiz, setQuiz] = useState<typeof mockQuiz | null>(null);
+  const [quiz, setQuiz] = useState<any>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [score, setScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [startTime, setStartTime] = useState<Date | null>(null);
+  const [timeSpent, setTimeSpent] = useState<number>(0);
+  const [quizResult, setQuizResult] = useState<any>(null);
 
   useEffect(() => {
-    // In a real application, fetch the quiz data from an API
+    // Quiz verilerini API'den yükle
     const loadQuiz = async () => {
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        if (quizId === mockQuiz.id) {
-          setQuiz(mockQuiz);
-          setSelectedAnswers(new Array(mockQuiz.questions.length).fill(-1));
-        } else {
-          setError('Quiz not found');
-        }
-      } catch (err) {
-        setError('Failed to load quiz');
-        console.error(err);
+        const response = await axios.get(`/api/quizzes/${quizId}`);
+        setQuiz(response.data);
+        setSelectedAnswers(new Array(response.data.questions.length).fill(-1));
+        setStartTime(new Date());
+      } catch (err: any) {
+        console.error('Quiz yükleme hatası:', err);
+        setError(err.response?.data?.error || 'Quiz yüklenirken bir hata oluştu');
       } finally {
         setLoading(false);
       }
@@ -123,21 +59,29 @@ export default function QuizPage({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!quiz) return;
     
-    // Calculate score
-    let correctCount = 0;
+    // Harcanan süreyi hesapla (saniye cinsinden)
+    const endTime = new Date();
+    const seconds = startTime ? Math.floor((endTime.getTime() - startTime.getTime()) / 1000) : 0;
+    setTimeSpent(seconds);
     
-    quiz.questions.forEach((question, index) => {
-      if (selectedAnswers[index] === question.correctAnswer) {
-        correctCount++;
-      }
-    });
-    
-    const calculatedScore = Math.round((correctCount / quiz.questions.length) * 100);
-    setScore(calculatedScore);
-    setQuizSubmitted(true);
+    try {
+      // Quiz sonucunu API'ye gönder
+      const response = await axios.post('/api/results', {
+        quizId: quiz._id,
+        answers: selectedAnswers,
+        timeSpent: seconds
+      });
+      
+      setQuizResult(response.data);
+      setScore(response.data.score);
+      setQuizSubmitted(true);
+    } catch (err: any) {
+      console.error('Quiz sonucu gönderme hatası:', err);
+      setError(err.response?.data?.error || 'Quiz sonucu kaydedilirken bir hata oluştu');
+    }
   };
 
   const handleRetry = () => {
@@ -145,23 +89,26 @@ export default function QuizPage({ params }: { params: { id: string } }) {
     setCurrentQuestionIndex(0);
     setQuizSubmitted(false);
     setScore(null);
+    setStartTime(new Date());
+    setTimeSpent(0);
+    setQuizResult(null);
+  };
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="card text-center py-12">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mx-auto mb-6"></div>
-            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mx-auto mb-2"></div>
-            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-2/3 mx-auto mb-6"></div>
-            <div className="space-y-3">
-              <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded"></div>
-              <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded"></div>
-              <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded"></div>
-              <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded"></div>
-            </div>
-          </div>
+          <BiLoader className="w-12 h-12 mx-auto text-primary-500 animate-spin mb-4" />
+          <h2 className="text-2xl font-semibold mb-2">Quiz Yükleniyor</h2>
+          <p className="text-gray-600 dark:text-gray-300">
+            Lütfen bekleyin...
+          </p>
         </div>
       </div>
     );
@@ -171,13 +118,13 @@ export default function QuizPage({ params }: { params: { id: string } }) {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="card bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400">
-          <h2 className="text-2xl font-semibold mb-4">Error</h2>
-          <p className="mb-6">{error || 'Quiz not found'}</p>
+          <h2 className="text-2xl font-semibold mb-4">Hata</h2>
+          <p className="mb-6">{error || 'Quiz bulunamadı'}</p>
           <button
             className="btn btn-primary"
             onClick={() => router.push('/quizzes')}
           >
-            Back to Quizzes
+            Quizlere Dön
           </button>
         </div>
       </div>
@@ -188,18 +135,22 @@ export default function QuizPage({ params }: { params: { id: string } }) {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="card mb-8">
-          <h1 className="text-3xl font-bold mb-4">{quiz.title} - Results</h1>
-          <div className="flex items-center mb-6">
-            <div className="w-32 h-32 rounded-full flex items-center justify-center border-8 border-primary-500 mr-6">
+          <h1 className="text-3xl font-bold mb-4">{quiz.title} - Sonuçlar</h1>
+          <div className="flex flex-col md:flex-row items-center mb-6">
+            <div className="w-32 h-32 rounded-full flex items-center justify-center border-8 border-primary-500 mb-4 md:mb-0 md:mr-6">
               <span className="text-4xl font-bold text-primary-500">{score}%</span>
             </div>
             <div>
               <p className="text-xl mb-2">
-                You answered {selectedAnswers.filter((ans, idx) => ans === quiz.questions[idx].correctAnswer).length} out of {quiz.questions.length} questions correctly.
+                {quiz.questions.length} sorudan {quizResult?.correctAnswers || 0} tanesini doğru yanıtladınız.
               </p>
-              <p className="text-gray-600 dark:text-gray-300">
-                {score && score >= 80 ? 'Great job!' : score && score >= 60 ? 'Good effort!' : 'Keep practicing!'}
+              <p className="text-gray-600 dark:text-gray-300 mb-2">
+                {score && score >= 80 ? 'Harika iş!' : score && score >= 60 ? 'İyi çaba!' : 'Daha fazla pratik yapmalısın!'}
               </p>
+              <div className="flex items-center text-gray-600 dark:text-gray-300">
+                <BiTime className="mr-1" />
+                <span>Toplam süre: {formatTime(timeSpent)}</span>
+              </div>
             </div>
           </div>
           
@@ -208,21 +159,21 @@ export default function QuizPage({ params }: { params: { id: string } }) {
               className="btn btn-secondary"
               onClick={() => router.push('/quizzes')}
             >
-              Back to Quizzes
+              Quizlere Dön
             </button>
             <button 
               className="btn btn-primary"
               onClick={handleRetry}
             >
-              Retry Quiz
+              Tekrar Dene
             </button>
           </div>
         </div>
         
         <div className="space-y-6">
-          <h2 className="text-2xl font-semibold mb-2">Review Answers</h2>
+          <h2 className="text-2xl font-semibold mb-2">Cevapları İncele</h2>
           
-          {quiz.questions.map((question, questionIndex) => (
+          {quiz.questions.map((question: any, questionIndex: number) => (
             <div key={question.id} className="card">
               <div className="flex">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 flex-shrink-0 ${
@@ -237,24 +188,24 @@ export default function QuizPage({ params }: { params: { id: string } }) {
                 <div>
                   <h3 className="text-lg font-medium mb-3">{question.question}</h3>
                   <div className="space-y-2">
-                    {question.options.map((option, optionIndex) => (
+                    {question.options.map((option: string, optionIndex: number) => (
                       <div 
                         key={optionIndex} 
                         className={`p-3 rounded-md border ${
                           optionIndex === question.correctAnswer 
-                            ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20' 
+                            ? 'border-green-200 dark:border-green-800' 
                             : optionIndex === selectedAnswers[questionIndex] 
-                              ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20' 
+                              ? 'border-red-200 dark:border-red-800' 
                               : 'border-gray-200 dark:border-gray-700'
                         }`}
                       >
                         <div className="flex justify-between items-center">
                           <span>{option}</span>
                           {optionIndex === question.correctAnswer && (
-                            <span className="text-green-600 dark:text-green-400 font-medium">Correct</span>
+                            <span className="text-green-600 dark:text-green-400 font-medium">Doğru</span>
                           )}
                           {optionIndex === selectedAnswers[questionIndex] && optionIndex !== question.correctAnswer && (
-                            <span className="text-red-600 dark:text-red-400 font-medium">Your answer</span>
+                            <span className="text-red-600 dark:text-red-400 font-medium">Senin cevabın</span>
                           )}
                         </div>
                       </div>
@@ -284,9 +235,9 @@ export default function QuizPage({ params }: { params: { id: string } }) {
         </div>
         
         <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-6">
-          <span>Question {currentQuestionIndex + 1} of {quiz.questions.length}</span>
+          <span>Soru {currentQuestionIndex + 1} / {quiz.questions.length}</span>
           <span>
-            {selectedAnswers.filter(ans => ans !== -1).length} of {quiz.questions.length} answered
+            {selectedAnswers.filter(ans => ans !== -1).length} / {quiz.questions.length} yanıtlandı
           </span>
         </div>
       </div>
@@ -295,12 +246,12 @@ export default function QuizPage({ params }: { params: { id: string } }) {
         <h2 className="text-xl font-semibold mb-6">{currentQuestion.question}</h2>
         
         <div className="space-y-3 mb-6">
-          {currentQuestion.options.map((option, optionIndex) => (
+          {currentQuestion.options.map((option: string, optionIndex: number) => (
             <div
               key={optionIndex}
               className={`p-4 rounded-md border cursor-pointer transition-all ${
                 selectedAnswers[currentQuestionIndex] === optionIndex
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/10'
+                  ? 'border-primary-500'
                   : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
               }`}
               onClick={() => handleAnswerSelect(optionIndex)}
@@ -318,7 +269,7 @@ export default function QuizPage({ params }: { params: { id: string } }) {
           disabled={currentQuestionIndex === 0}
         >
           <BiLeftArrowAlt className="mr-1" />
-          Previous
+          Önceki
         </button>
         
         {currentQuestionIndex === quiz.questions.length - 1 ? (
@@ -327,14 +278,14 @@ export default function QuizPage({ params }: { params: { id: string } }) {
             onClick={handleSubmit}
             disabled={selectedAnswers.some(ans => ans === -1)}
           >
-            Submit Quiz
+            Quiz'i Tamamla
           </button>
         ) : (
           <button
             className="btn btn-primary flex items-center"
             onClick={handleNext}
           >
-            Next
+            Sonraki
             <BiRightArrowAlt className="ml-1" />
           </button>
         )}
@@ -343,7 +294,7 @@ export default function QuizPage({ params }: { params: { id: string } }) {
       {selectedAnswers.some(ans => ans === -1) && currentQuestionIndex === quiz.questions.length - 1 && (
         <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-400 rounded-md flex items-center">
           <BiFlag className="mr-2 flex-shrink-0" />
-          <span>Please answer all questions before submitting the quiz.</span>
+          <span>Quiz'i tamamlamadan önce lütfen tüm soruları yanıtlayın.</span>
         </div>
       )}
     </div>

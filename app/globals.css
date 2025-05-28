@@ -4,7 +4,11 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
+    @apply bg-white text-gray-900;
+  }
+  
+  .dark body {
+    @apply bg-gray-900 text-gray-100;
   }
   
   h1 {
@@ -25,20 +29,123 @@
     @apply px-4 py-2 rounded-md transition-colors font-medium;
   }
   
+  .btn-lg {
+    @apply px-6 py-3 text-lg rounded-md;
+  }
+  
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700;
+    @apply bg-blue-600 text-white hover:bg-blue-700;
   }
   
   .btn-secondary {
-    @apply bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600;
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+  }
+  
+  .dark .btn-secondary {
+    @apply bg-gray-700 text-gray-100 hover:bg-gray-600;
   }
   
   .card {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-md p-6;
+    @apply bg-white rounded-lg shadow-md p-6;
+  }
+  
+  .dark .card {
+    @apply bg-gray-800;
   }
   
   .input {
-    @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md 
-    focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-800;
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md 
+    focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white;
+  }
+  
+  .dark .input {
+    @apply border-gray-700 bg-gray-800;
+  }
+
+  /* Animated Gradient Text */
+  .animated-gradient-text {
+    background: linear-gradient(
+      45deg,
+      #1f2937,
+      #7c3aed,
+      #2563eb,
+      #7c3aed,
+      #1f2937
+    );
+    background-size: 300% 300%;
+    animation: gradientFlow 3s ease-in-out infinite;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .dark .animated-gradient-text {
+    background: linear-gradient(
+      45deg,
+      #ffffff,
+      #c084fc,
+      #60a5fa,
+      #a855f7,
+      #ffffff
+    );
+    background-size: 300% 300%;
+    animation: gradientFlow 3s ease-in-out infinite;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Sparkle animation for accent text */
+  .sparkle-text {
+    background: linear-gradient(
+      90deg,
+      #7c3aed,
+      #c084fc,
+      #7c3aed,
+      #a855f7,
+      #7c3aed
+    );
+    background-size: 200% 200%;
+    animation: sparkle 2s ease-in-out infinite;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .dark .sparkle-text {
+    background: linear-gradient(
+      90deg,
+      #c084fc,
+      #ddd6fe,
+      #c084fc,
+      #a855f7,
+      #c084fc
+    );
+    background-size: 200% 200%;
+    animation: sparkle 2s ease-in-out infinite;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
   }
 } 

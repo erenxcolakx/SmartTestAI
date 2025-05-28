@@ -1,101 +1,88 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { BiLoader, BiCheck, BiX } from 'react-icons/bi';
-
-// Mock data for generated questions
-const mockQuestions = [
-  {
-    id: 1,
-    question: 'What is the main function of SmartTest AI?',
-    options: [
-      'Editing documents',
-      'Generating AI-powered quizzes',
-      'Video conferencing',
-      'Storing files in the cloud'
-    ],
-    correctAnswer: 1
-  },
-  {
-    id: 2,
-    question: 'What is the maximum file size supported for uploads?',
-    options: [
-      '5MB',
-      '10MB',
-      '20MB',
-      '50MB'
-    ],
-    correctAnswer: 1
-  },
-  {
-    id: 3,
-    question: 'Which file formats are supported by SmartTest AI?',
-    options: [
-      'PDF, DOCX, TXT',
-      'PDF, JPG, PNG',
-      'DOCX, XLSX, PPT',
-      'TXT, CSV, XML'
-    ],
-    correctAnswer: 0
-  },
-  {
-    id: 4,
-    question: 'How does SmartTest AI generate questions?',
-    options: [
-      'Manual input from users',
-      'Using pre-defined templates',
-      'Using AI and NLP models',
-      'Copying from external sources'
-    ],
-    correctAnswer: 2
-  },
-  {
-    id: 5,
-    question: 'How long are performance reports stored in SmartTest AI?',
-    options: [
-      '7 days',
-      '14 days',
-      '30 days',
-      '90 days'
-    ],
-    correctAnswer: 2
-  }
-];
+import axios from 'axios';
 
 export default function GeneratePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fileName = searchParams.get('fileName');
+  
   const [stage, setStage] = useState<'processing' | 'review' | 'saving'>('processing');
   const [progress, setProgress] = useState(0);
-  const [questions, setQuestions] = useState<typeof mockQuestions>([]);
+  const [questions, setQuestions] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [title, setTitle] = useState('Yeni Quiz');
 
   useEffect(() => {
-    // Simulate processing file and generating questions
-    const timer = setInterval(() => {
-      setProgress(prev => {
-        const newProgress = prev + 5;
-        if (newProgress >= 100) {
-          clearInterval(timer);
-          setStage('review');
-          setQuestions(mockQuestions);
-          return 100;
-        }
-        return newProgress;
-      });
-    }, 150);
+    if (!fileName) {
+      setError('Dosya adı bulunamadı. Lütfen önce bir dosya yükleyin.');
+      return;
+    }
 
-    return () => clearInterval(timer);
-  }, []);
+    // Sorular oluştur
+    const generateQuestions = async () => {
+      // İlerleme animasyonu için bir interval başlat
+      const timerRef = { current: null as NodeJS.Timeout | null };
+      
+      timerRef.current = setInterval(() => {
+        setProgress(prev => {
+          // API yanıt verdiyse veya hata oluştuysa ilerlemeyi durdur
+          if (prev >= 95) {
+            if (timerRef.current) clearInterval(timerRef.current);
+            return prev;
+          }
+          return prev + 5;
+        });
+      }, 300);
+
+      try {
+        // API'ye istek gönder
+        const response = await axios.post('/api/generate', { fileName });
+        
+        // İlerleme animasyonunu temizle
+        if (timerRef.current) clearInterval(timerRef.current);
+        setProgress(100);
+        
+        // Soruları al ve state'e kaydet
+        const { questions } = response.data;
+        
+        // Her soruya benzersiz bir ID ekle (API tarafından eklenmemişse)
+        const questionsWithId = questions.map((q: any, index: number) => ({
+          ...q,
+          id: q.id || `q-${Date.now()}-${index}`
+        }));
+        
+        setQuestions(questionsWithId);
+        setStage('review');
+      } catch (err: any) {
+        console.error('Soru oluşturma hatası:', err);
+        setError(err.response?.data?.error || 'Sorular oluşturulurken bir hata meydana geldi.');
+        if (timerRef.current) clearInterval(timerRef.current);
+      }
+    };
+
+    generateQuestions();
+  }, [fileName]);
 
   const handleSave = async () => {
     setStage('saving');
     
-    // Simulate saving to database
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Redirect to quizzes page
-    router.push('/quizzes');
+    try {
+      // Quiz'i veritabanına kaydet
+      const response = await axios.post('/api/quizzes', {
+        title,
+        questions
+      });
+      
+      // Quiz sayfasına yönlendir
+      router.push(`/quizzes`);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Quiz kaydedilirken bir hata oluştu.');
+      setStage('review');
+    }
   };
 
   const handleEditQuestion = (index: number, value: string) => {
@@ -125,14 +112,14 @@ export default function GeneratePage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8 text-center">Question Generation</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center">Soru Oluşturma</h1>
       
       {stage === 'processing' && (
         <div className="card text-center">
           <BiLoader className="w-12 h-12 mx-auto text-primary-500 animate-spin mb-4" />
-          <h2 className="text-2xl font-semibold mb-2">Processing Document</h2>
+          <h2 className="text-2xl font-semibold mb-2">Doküman İşleniyor</h2>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Our AI is analyzing your document and generating questions...
+            Yapay zeka dokümanınızı analiz ediyor ve sorular oluşturuyor...
           </p>
           
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-4">
@@ -143,10 +130,10 @@ export default function GeneratePage() {
           </div>
           
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {progress < 30 && 'Parsing document...'}
-            {progress >= 30 && progress < 60 && 'Analyzing content...'}
-            {progress >= 60 && progress < 90 && 'Generating questions...'}
-            {progress >= 90 && 'Finalizing...'}
+            {progress < 30 && 'Doküman ayrıştırılıyor...'}
+            {progress >= 30 && progress < 60 && 'İçerik analiz ediliyor...'}
+            {progress >= 60 && progress < 90 && 'Sorular oluşturuluyor...'}
+            {progress >= 90 && 'Tamamlanıyor...'}
           </p>
         </div>
       )}
@@ -154,10 +141,24 @@ export default function GeneratePage() {
       {stage === 'review' && questions.length > 0 && (
         <div>
           <div className="card mb-6">
-            <h2 className="text-2xl font-semibold mb-4">Review Generated Questions</h2>
+            <h2 className="text-2xl font-semibold mb-4">Oluşturulan Soruları İnceleyin</h2>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Our AI has generated the following questions based on your document. You can edit or remove questions before saving.
+              Yapay zeka dokümanınız için aşağıdaki soruları oluşturdu. Kaydetmeden önce soruları düzenleyebilir veya kaldırabilirsiniz.
             </p>
+            
+            <div className="mb-4">
+              <label htmlFor="quiz-title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Quiz Başlığı
+              </label>
+              <input
+                type="text"
+                id="quiz-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="input bg-transparent"
+                placeholder="Quiz için bir başlık girin"
+              />
+            </div>
           </div>
           
           {questions.map((question, questionIndex) => (
@@ -180,7 +181,7 @@ export default function GeneratePage() {
               </div>
               
               <div className="space-y-3 mb-4">
-                {question.options.map((option, optionIndex) => (
+                {question.options.map((option: string, optionIndex: number) => (
                   <div key={optionIndex} className="flex items-center">
                     <input
                       type="radio"
@@ -194,14 +195,14 @@ export default function GeneratePage() {
                       type="text"
                       value={option}
                       onChange={(e) => handleEditOption(questionIndex, optionIndex, e.target.value)}
-                      className="flex-1 p-2 border border-gray-200 dark:border-gray-700 rounded-md focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                      className="flex-1 p-2 border border-gray-200 dark:border-gray-700 rounded-md focus:border-primary-500 focus:ring-1 focus:ring-primary-500 bg-transparent"
                     />
                   </div>
                 ))}
               </div>
               
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Select the radio button next to the correct answer.
+                Doğru cevabı işaretlemek için yanındaki radio butonunu seçin.
               </p>
             </div>
           ))}
@@ -211,13 +212,14 @@ export default function GeneratePage() {
               className="btn btn-secondary"
               onClick={() => router.push('/upload')}
             >
-              Cancel
+              İptal
             </button>
             <button
               className="btn btn-primary"
               onClick={handleSave}
+              disabled={questions.length === 0 || !title.trim()}
             >
-              Save Quiz
+              Quiz'i Kaydet
             </button>
           </div>
         </div>
@@ -226,22 +228,22 @@ export default function GeneratePage() {
       {stage === 'saving' && (
         <div className="card text-center">
           <BiLoader className="w-12 h-12 mx-auto text-primary-500 animate-spin mb-4" />
-          <h2 className="text-2xl font-semibold mb-2">Saving Quiz</h2>
+          <h2 className="text-2xl font-semibold mb-2">Quiz Kaydediliyor</h2>
           <p className="text-gray-600 dark:text-gray-300">
-            Please wait while we save your quiz...
+            Lütfen quiz'iniz kaydedilirken bekleyin...
           </p>
         </div>
       )}
       
       {error && (
         <div className="card bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400">
-          <h3 className="text-lg font-semibold mb-2">Error</h3>
+          <h3 className="text-lg font-semibold mb-2">Hata</h3>
           <p>{error}</p>
           <button
             className="btn btn-secondary mt-4"
             onClick={() => router.push('/upload')}
           >
-            Try Again
+            Tekrar Dene
           </button>
         </div>
       )}
