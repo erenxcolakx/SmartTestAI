@@ -1,74 +1,100 @@
 # SmartTest AI
 
-SmartTest AI is a web-based application for AI-powered automatic question generation and quiz taking. It allows users to upload documents, generate questions using AI, and test their knowledge with quizzes.
+AI destekli otomatik soru üretimi ve quiz çözme uygulaması.
 
-## Features
+## Kurulum
 
-- Upload documents (.pdf, .docx, .txt)
-- Generate questions using AI (NLP and LLM models)
-- Take quizzes based on generated questions
-- Instant scoring and feedback
-- Maintain a question bank
-- View basic performance history
-
-## Tech Stack
-
-- Next.js (React framework)
-- TypeScript
-- Tailwind CSS
-- OpenAI API (for AI-powered question generation)
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 16.8.0 or later
-- npm or yarn package manager
-
-### Installation
-
-1. Clone the repository
-```bash
-git clone https://github.com/erenxcolakx/SmartTestAI.git
-cd SmartTestAI
-```
-
-2. Install dependencies
+1. Bağımlılıkları yükleyin:
 ```bash
 npm install
 ```
 
-3. Start the development server
+2. Environment değişkenlerini ayarlayın (.env.local dosyası oluşturun):
+
+```env
+# NextAuth.js
+NEXTAUTH_SECRET=your-secret-key-here
+NEXTAUTH_URL=http://localhost:3000
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# MongoDB - Atlas için (SSL sorunları için)
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/smarttestai?retryWrites=true&w=majority&ssl=true
+
+# MongoDB - Local için (SSL sorunları olmadan)
+# MONGODB_URI=mongodb://localhost:27017/smarttestai
+
+# OpenAI
+OPENAI_API_KEY=your-openai-api-key
+```
+
+## MongoDB SSL Hatası Çözümü
+
+Eğer MongoDB bağlantısında SSL hatası alıyorsanız:
+
+1. **MongoDB Atlas kullanıyorsanız:** Connection string'inizde `ssl=true` parametresinin olduğundan emin olun
+2. **Local MongoDB kullanıyorsanız:** SSL olmadan bağlanmayı deneyin
+3. **Firewall/Proxy sorunu:** Ağ bağlantınızı kontrol edin
+
+## Özellikler
+
+- 📄 Belge yükleme (PDF, DOCX, TXT)
+- 🤖 AI destekli soru üretimi
+- 📝 Interaktif quiz çözme
+- 📊 Performans takibi
+- 🔐 Güvenli kimlik doğrulama
+- 💾 Veritabanı entegrasyonu
+
+## Geliştirme
+
 ```bash
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application
+Uygulama http://localhost:3000 adresinde çalışacaktır.
 
-## Project Structure
+## Teknolojiler
 
-- `/app`: Main application code and components
-  - `/components`: Reusable UI components
-  - `/api`: API route handlers
-- `/lib`: Utility functions and helpers
-- `/public`: Static assets
-- `/styles`: Global styles
+- **Frontend:** Next.js 14, TypeScript, Tailwind CSS
+- **Backend:** Next.js API Routes
+- **Veritabanı:** MongoDB
+- **Kimlik Doğrulama:** NextAuth.js
+- **AI:** OpenAI GPT-3.5
+- **Belge İşleme:** pdf-parse, mammoth
 
-## Usage
+## Yapılandırma
 
-1. **Upload a Document**: Navigate to the upload page and select a document (.pdf, .docx, or .txt)
-2. **Generate Questions**: The AI will automatically analyze the content and generate relevant questions
-3. **Take Quiz**: Answer the generated questions
-4. **View Results**: Get instant feedback and see your score
-5. **Track Performance**: View your quiz history and performance statistics
+### MongoDB Bağlantı Sorunları
 
-## Limitations
+SSL hatası alıyorsanız, connection string'inizi şu formatlardan biri ile deneyin:
 
-- Maximum file size: 10MB
-- Supported formats: .pdf, .docx, .txt
-- Maximum of 10 questions per document
-- Performance data stored for 30 days
+```env
+# Atlas (Önerilen)
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/db?retryWrites=true&w=majority&ssl=true&tlsAllowInvalidCertificates=true
 
-## License
+# Local
+MONGODB_URI=mongodb://localhost:27017/smarttestai
+```
 
-This project is licensed under the ISC License - see the LICENSE file for details. 
+### Google OAuth Ayarları
+
+1. Google Cloud Console'da yeni proje oluşturun
+2. OAuth consent screen'i yapılandırın
+3. Credentials bölümünden OAuth 2.0 Client ID oluşturun
+4. Authorized redirect URIs'ye şunları ekleyin:
+   - http://localhost:3000/api/auth/callback/google (development)
+   - https://yourdomain.com/api/auth/callback/google (production)
+
+## Deployment
+
+### Vercel
+
+1. Vercel'e deploy edin
+2. Environment variables'ları ayarlayın
+3. NEXTAUTH_URL'i production domain'iniz olarak güncelleyin
+
+## Lisans
+
+MIT License 
