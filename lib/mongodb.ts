@@ -9,10 +9,6 @@ if (!MONGODB_URI || MONGODB_URI.trim() === '' || (!MONGODB_URI.startsWith('mongo
   MONGODB_URI = 'mongodb://localhost:27017/smarttest';
 }
 
-// Vercel deployment güvenlik kontrolü
-const isVercelProduction = process.env.VERCEL_ENV === 'production';
-const customAuthHeader = process.env.MONGODB_AUTH_HEADER;
-
 // MongoDB bağlantı türünü kontrol et
 const isAtlas = MONGODB_URI.includes('mongodb+srv');
 const isLocal = MONGODB_URI.includes('localhost') || MONGODB_URI.includes('127.0.0.1');
@@ -38,14 +34,6 @@ const mongoOptions = {
   ...(isLocal && {
     // Local için TLS'i kapat
     tls: false,
-  }),
-
-  // Ek güvenlik için metadata
-  ...(isVercelProduction && customAuthHeader && {
-    metadata: {
-      'x-custom-auth': customAuthHeader,
-      'x-deployment-source': 'vercel'
-    }
   }),
 };
 
